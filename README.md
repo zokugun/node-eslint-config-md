@@ -42,7 +42,7 @@ API reference
 -------------
 
 ```typescript
-function markdown(options?: OptionRules<MarkdownRuleOptions> & OptionFiles & OptionIgnores & OptionOverridesFiles & OptionOverridesIgnores): Configurator;
+function markdown(options?: OptionRules<MarkdownRuleOptions | MarkdownLinksRuleOptions | MarkdownPreferencesRuleOptions> & OptionFiles & OptionIgnores & OptionOverridesFiles & OptionOverridesIgnores): Configurator;
 ```
 
 Contributions
