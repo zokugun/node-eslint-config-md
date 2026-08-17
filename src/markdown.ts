@@ -4,6 +4,7 @@ import type { RuleOptions as MarkdownLinksRuleOptions } from './typegens/markdow
 import type { RuleOptions as MarkdownPreferencesRuleOptions } from './typegens/markdown-preferences.js';
 
 import { default as mdPlugin } from '@eslint/markdown';
+import { mergeProcessors, processorPassThrough } from 'eslint-merge-processors';
 import { default as linksPlugin } from 'eslint-plugin-markdown-links';
 import { default as prefsPlugin } from 'eslint-plugin-markdown-preferences';
 
@@ -24,7 +25,9 @@ export function markdown(options: Options = {}): Configurator {
 		...(options.ignores ?? [])
 	];
 
-	return (resolve) => {
+	return (resolve, register) => {
+		register('embedded.sources', '**/*.md');
+
 		const ecRules: Partial<MarkdownPreferencesRuleOptions> = {};
 		const ecConfig = resolve<EditorConfigOptions>('editorconfig/md');
 
@@ -36,16 +39,37 @@ export function markdown(options: Options = {}): Configurator {
 			} = ecConfig;
 
 			if (indent_style === 'space') {
+				const indentSize = Number(indent_size);
+
 				ecRules['markdown-preferences/no-tabs'] = [
 					'error',
 					{
 						checkTarget: 'all',
-						codeBlockTabWidth: Number(indent_size),
+						codeBlockTabWidth: indentSize,
 					},
 				];
+
+				ecRules['markdown-preferences/indent'] = [
+					'error',
+					{
+						listItems: {
+							first: 1,
+							other: indentSize,
+							relativeTo: 'markerStart',
+						},
+					},
+				];
+
+				register('embedded.indent', indentSize);
 			}
 			else if (indent_style === 'tab') {
 				ecRules['markdown-preferences/no-tabs'] = ['off'];
+
+				ecRules['markdown-preferences/indent'] = [
+					'off',
+				];
+
+				register('embedded.indent', 'tab');
 			}
 
 			if(trim_trailing_whitespace === 'true') {
@@ -58,39 +82,49 @@ export function markdown(options: Options = {}): Configurator {
 
 		return [
 			{
-				name: 'zokugun/md/rules',
-				files,
-				ignores,
+				name: 'zokugun/markdown/plugin',
 				plugins: {
 					md: mdPlugin,
 					'markdown-links': linksPlugin,
 					'markdown-preferences': prefsPlugin,
 				},
+			},
+			{
+				name: 'zokugun/markdown/embedded',
+				files,
+				ignores: [
+					...ignores,
+					'**/*.md/*.md',
+				],
+				processor: mergeProcessors([
+					mdPlugin.processors!.markdown,
+					processorPassThrough,
+				]),
+			},
+			{
+				name: 'zokugun/markdown/rules',
+				files,
+				ignores,
 				language: 'md/gfm',
 				languageOptions: {
 					frontmatter: 'yaml',
 				},
 				rules: {
 					...mdRules,
-					...linksRules,
 					...options.rules,
-				}
+				},
 			},
 			{
 				name: 'zokugun/markdown-preferences/rules',
 				files,
 				ignores,
-				plugins: {
-					md: mdPlugin,
-					'markdown-links': linksPlugin,
-					'markdown-preferences': prefsPlugin,
-				},
 				language: 'markdown-preferences/extended-syntax',
 				rules: {
-					...prefsRules,
 					...ecRules,
+					...linksRules,
+					...prefsRules,
 					...options.rules,
-				}
+				},
 			},
 		];
 	};
