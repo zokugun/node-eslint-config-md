@@ -1,5 +1,8 @@
 # Changelog
 
+## v0.3.0 | 2026-08-17
+- support embedded code blocks
+
 ## v0.2.0 | 2026-08-14
 - use `eslint-plugin-markdown-preferences` and `eslint-plugin-markdown-links` plugins
 
