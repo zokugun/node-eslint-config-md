@@ -1,6 +1,6 @@
-import type { RuleOptions } from '../typegens/markdown-links.js';
+import type { MarkdownLinksRuleOptions } from '../typegens/markdown-links.js';
 
-export const rules: Required<RuleOptions> = {
+export const linksRules: Required<MarkdownLinksRuleOptions> = {
 	'markdown-links/no-dead-urls': [
 		'off',
 	],

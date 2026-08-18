@@ -1,20 +1,19 @@
-import type { Configurator, EditorConfigOptions, OptionFiles, OptionIgnores, OptionOverridesFiles, OptionOverridesIgnores, OptionRules } from '@zokugun/eslint-toolkit';
-import type { RuleOptions as MarkdownRuleOptions } from './typegens/markdown.js';
-import type { RuleOptions as MarkdownLinksRuleOptions } from './typegens/markdown-links.js';
-import type { RuleOptions as MarkdownPreferencesRuleOptions } from './typegens/markdown-preferences.js';
+import type { Configurator, DefaultOptions } from '@zokugun/eslint-toolkit';
+import type { MarkdownRuleOptions } from './typegens/markdown.js';
+import type { MarkdownLinksRuleOptions } from './typegens/markdown-links.js';
+import type { MarkdownPreferencesRuleOptions } from './typegens/markdown-preferences.js';
 
 import { default as mdPlugin } from '@eslint/markdown';
 import { mergeProcessors, processorPassThrough } from 'eslint-merge-processors';
 import { default as linksPlugin } from 'eslint-plugin-markdown-links';
 import { default as prefsPlugin } from 'eslint-plugin-markdown-preferences';
 
-import { rules as mdRules } from './rules/markdown.js';
-import { rules as linksRules } from './rules/markdown-links.js';
-import { rules as prefsRules } from './rules/markdown-preferences.js';
+import * as editorConfig from './resolvers/editor-config.js';
+import { mdRules } from './rules/markdown.js';
+import { linksRules } from './rules/markdown-links.js';
+import { preferencesRules } from './rules/markdown-preferences.js';
 
-type Options = OptionRules<MarkdownRuleOptions | MarkdownLinksRuleOptions | MarkdownPreferencesRuleOptions> & OptionFiles & OptionIgnores & OptionOverridesFiles & OptionOverridesIgnores;
-
-export function markdown(options: Options = {}): Configurator {
+export function markdown(options: DefaultOptions<MarkdownRuleOptions | MarkdownLinksRuleOptions | MarkdownPreferencesRuleOptions> = {}): Configurator {
 	const files = options.overrides?.files ?? [
 		'**/*.md',
 		...(options.files ?? [])
@@ -26,57 +25,43 @@ export function markdown(options: Options = {}): Configurator {
 	];
 
 	return (resolve, register) => {
-		register('embedded.sources', '**/*.md');
+		register('embedded/sources', '**/*.md');
 
-		const ecRules: Partial<MarkdownPreferencesRuleOptions> = {};
-		const ecConfig = resolve<EditorConfigOptions>('editorconfig/md');
+		let markdownRules: Partial<MarkdownRuleOptions> | undefined;
+		let markdownPreferencesRules: Partial<MarkdownPreferencesRuleOptions> | undefined;
 
-		if(ecConfig) {
-			const {
-				indent_size,
-				indent_style,
-				trim_trailing_whitespace,
-			} = ecConfig;
+		if(options.overrides?.rules) {
+			markdownRules = options.overrides.rules as Partial<MarkdownRuleOptions>;
+			markdownPreferencesRules = options.overrides.rules as Partial<MarkdownPreferencesRuleOptions>;
+		}
+		else {
+			const preserveWords = resolve<string>('glossary/preserveWords', []);
+			const minorWords = resolve<string>('glossary/minorWords', []);
 
-			if (indent_style === 'space') {
-				const indentSize = Number(indent_size);
+			markdownRules = {
+				...mdRules,
+				...options.rules,
+			};
 
-				ecRules['markdown-preferences/no-tabs'] = [
+			markdownPreferencesRules = {
+				...preferencesRules,
+				...linksRules,
+				...editorConfig.markdown(resolve, register),
+				'markdown-preferences/heading-casing': [
 					'error',
 					{
-						checkTarget: 'all',
-						codeBlockTabWidth: indentSize,
-					},
-				];
-
-				ecRules['markdown-preferences/indent'] = [
+						preserveWords,
+						minorWords,
+					}
+				],
+				'markdown-preferences/table-header-casing': [
 					'error',
 					{
-						listItems: {
-							first: 1,
-							other: indentSize,
-							relativeTo: 'markerStart',
-						},
-					},
-				];
-
-				register('embedded.indent', indentSize);
-			}
-			else if (indent_style === 'tab') {
-				ecRules['markdown-preferences/no-tabs'] = ['off'];
-
-				ecRules['markdown-preferences/indent'] = [
-					'off',
-				];
-
-				register('embedded.indent', 'tab');
-			}
-
-			if(trim_trailing_whitespace === 'true') {
-				ecRules['markdown-preferences/no-trailing-spaces'] = ['error'];
-			}
-			else if(trim_trailing_whitespace === 'false') {
-				ecRules['markdown-preferences/no-trailing-spaces'] = ['off'];
+						preserveWords,
+						minorWords,
+					}
+				],
+				...options.rules,
 			}
 		}
 
@@ -109,22 +94,14 @@ export function markdown(options: Options = {}): Configurator {
 				languageOptions: {
 					frontmatter: 'yaml',
 				},
-				rules: {
-					...mdRules,
-					...options.rules,
-				},
+				rules: markdownRules,
 			},
 			{
 				name: 'zokugun/markdown-preferences/rules',
 				files,
 				ignores,
 				language: 'markdown-preferences/extended-syntax',
-				rules: {
-					...ecRules,
-					...linksRules,
-					...prefsRules,
-					...options.rules,
-				},
+				rules: markdownPreferencesRules,
 			},
 		];
 	};

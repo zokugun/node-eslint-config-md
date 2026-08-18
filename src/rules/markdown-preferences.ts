@@ -1,6 +1,6 @@
-import type { RuleOptions } from '../typegens/markdown-preferences.js';
+import type { MarkdownPreferencesRuleOptions } from '../typegens/markdown-preferences.js';
 
-export const rules: Required<RuleOptions> = {
+export const preferencesRules: Required<MarkdownPreferencesRuleOptions> = {
 	'markdown-preferences/atx-heading-closing-sequence-length': [
 		'off',
 	],

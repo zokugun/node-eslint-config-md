@@ -1,6 +1,6 @@
-import type { RuleOptions } from '../typegens/markdown.js';
+import type { MarkdownRuleOptions } from '../typegens/markdown.js';
 
-export const rules: Required<RuleOptions> = {
+export const mdRules: Required<MarkdownRuleOptions> = {
 	'md/fenced-code-language': [
 		'error',
 	],
