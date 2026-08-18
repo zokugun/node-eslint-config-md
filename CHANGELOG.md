@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.0 | 2026-08-18
+- support glossary to word casing checks
+- rename keys of shared values
+
 ## v0.3.0 | 2026-08-17
 - support embedded code blocks
 
