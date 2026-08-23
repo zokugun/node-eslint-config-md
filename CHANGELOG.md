@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.1 | 2026-08-23
+- add non-code words to `markdown-preferences/prefer-inline-code-words`
+- exclude internal links from `markdown-preferences/prefer-link-reference-definitions`
+
 ## v0.4.0 | 2026-08-18
 - support glossary to word casing checks
 - rename keys of shared values
