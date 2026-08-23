@@ -35,8 +35,9 @@ export function markdown(options: DefaultOptions<MarkdownRuleOptions | MarkdownL
 			markdownPreferencesRules = options.overrides.rules as Partial<MarkdownPreferencesRuleOptions>;
 		}
 		else {
-			const preserveWords = resolve<string>('glossary/preserveWords', []);
 			const minorWords = resolve<string>('glossary/minorWords', []);
+			const nonCodeWords = resolve<string>('glossary/nonCodeWords', []);
+			const preserveWords = resolve<string>('glossary/preserveWords', []);
 
 			markdownRules = {
 				...mdRules,
@@ -53,6 +54,17 @@ export function markdown(options: DefaultOptions<MarkdownRuleOptions | MarkdownL
 						preserveWords,
 						minorWords,
 					}
+				],
+				'markdown-preferences/prefer-inline-code-words': [
+					'error',
+					{
+						words: ['/[A-Z][a-z]+\\.[a-z][A-Za-z]+/u'],
+						ignores: [
+							{
+								words: nonCodeWords,
+							},
+						],
+					},
 				],
 				'markdown-preferences/table-header-casing': [
 					'error',

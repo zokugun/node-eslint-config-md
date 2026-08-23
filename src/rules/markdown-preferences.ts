@@ -203,13 +203,13 @@ export const preferencesRules: Required<MarkdownPreferencesRuleOptions> = {
 		'error',
 	],
 	'markdown-preferences/prefer-inline-code-words': [
-		'error',
-		{
-			words: ['/[A-Z][a-z]+\\.[a-z][A-Za-z]+/u'],
-		},
+		'off',
 	],
 	'markdown-preferences/prefer-link-reference-definitions': [
 		'error',
+		{
+			ignoreUrlPatterns: ['/^#/'],
+		}
 	],
 	'markdown-preferences/prefer-linked-words': [
 		'off',
